@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>🎬 CineBot v2 Powered by: Gemma 3 HueHue 🎬</title>
+    <style>
+        body { background-color: #121212; color: white; font-family: sans-serif; display: flex; justify-content: center; height: 100vh; margin: 0; }
+        .chat-container { width: 100%; max-width: 700px; display: flex; flex-direction: column; height: 95vh; margin-top: 10px; border: 1px solid #333; border-radius: 10px; background-color: #1e1e1e; }
+        
+        /*Encabezados y menú */
+        .header { padding: 15px; background-color: #d32f2f; text-align: center; border-radius: 10px 10px 0 0; font-weight: bold; font-size: 1.2em; }
+        .menu-options { display: flex; gap: 10px; padding: 10px; background-color: #252525; overflow-x: auto; border-bottom: 1px solid #333; }
+        .menu-btn { 
+            flex: 1; padding: 8px; border: 1px solid #444; border-radius: 5px; 
+            background-color: #333; color: #bbb; cursor: pointer; font-size: 0.9em; transition: 0.3s;
+        }
+        .menu-btn:hover { background-color: #444; color: white; }
+        .menu-btn.active { background-color: #d32f2f; color: white; border-color: #d32f2f; font-weight: bold; }
+
+        /*área chat*/
+        .chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .message { padding: 10px 15px; border-radius: 20px; max-width: 80%; line-height: 1.4; }
+        .user { align-self: flex-end; background-color: #d32f2f; color: white; }
+        .bot { align-self: flex-start; background-color: #333; color: #ddd; }
+        
+        /*Caja de texto */
+        .status-bar { font-size: 0.8em; color: #777; padding: 5px 20px; text-align: center; }
+        .input-area { padding: 15px; display: flex; gap: 10px; border-top: 1px solid #333; }
+        input { flex: 1; padding: 10px; border-radius: 20px; border: none; outline: none; background-color: #2c2c2c; color: white; }
+        button.send-btn { padding: 10px 20px; border-radius: 20px; border: none; background-color: #d32f2f; color: white; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="header">🎬 CineBot 🎬</div>
+ 
+    <div class="menu-options">
+        <button class="menu-btn active" onclick="cambiarModo('recomendacion', this)">🍿 Recomendar</button>
+        <button class="menu-btn" onclick="cambiarModo('busqueda', this)">🔍 Buscar por Trama</button>
+        <button class="menu-btn" onclick="cambiarModo('series', this)">📺 Series</button>
+        <button class="menu-btn" onclick="cambiarModo('trivia', this)">💡 Trivia</button>
+        <button class="menu-btn" onclick="descargarHistorial()">💾 Guardar Chat</button>
+        <button class="menu-btn" onclick="location.href='/borrar/'"> 🗑️ Borrar Todo </button>
+    </div>
+
+    <div class="chat-box" id="caja-chat">
+        <div class="message bot">¡Hola! Selecciona una opción arriba y dime cómo puedo ayudarte hoy.</div>
+    </div>
+    
+    <div class="status-bar" id="status-text">Modo: Recomendación de Películas</div>
+
+    <div class="input-area">
+        <input type="text" id="mensaje-usuario" placeholder="Escribe aquí...">
+        <button class="send-btn" onclick="enviarMensaje()">Enviar</button>
+    </div>
+</div>
+
+<script>
+    let modoActual = 'recomendacion'; 
+
+//Memoria
+    let memoriaChats = {
+        'recomendacion': '',
+        'busqueda': '',
+        'series': '',
+        'trivia': ''
+    };
+
+    const bienvenidas = {
+        'recomendacion': '¡Hola! ¿Qué tipo de película buscas hoy? 🍿',
+        'busqueda': 'Describe una escena o trama y te ayudaré a encontrar la película. 🕵️‍♂️',
+        'series': '¿Qué series te han gustado recientemente? 📺',
+        'trivia': 'Dime un actor o película y te daré un dato curioso. 💡'
+    };
+
+// Inicializar memoria
+    memoriaChats['recomendacion'] = `<div class="message bot">${bienvenidas['recomendacion']}</div>`;
+
+    function cambiarModo(nuevoModo, btn) {
+        const caja = document.getElementById('caja-chat');
+        
+//Guardando la pantalla actual
+        memoriaChats[modoActual] = caja.innerHTML;
+
+
+        modoActual = nuevoModo;
+        
+        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const textos = {
+            'recomendacion': 'Modo: Recomendación de Películas',
+            'busqueda': 'Modo: Adivinar película por resumen',
+            'series': 'Modo: Sugerencias de Series',
+            'trivia': 'Modo: Datos curiosos de cine'
+        };
+        document.getElementById('status-text').innerText = textos[nuevoModo];
+
+//Recuperar memoria
+        if (memoriaChats[nuevoModo] && memoriaChats[nuevoModo] !== '') {
+            caja.innerHTML = memoriaChats[nuevoModo];
+        } else {
+//En caso de ser el primer mensaje o haber borrado el historial
+            caja.innerHTML = `<div class="message bot">${bienvenidas[nuevoModo]}</div>`;
+        }
+        
+        caja.scrollTop = caja.scrollHeight;
+    }
+
+//Detectar ENTER para no tener que hacer click en el botón
+    document.getElementById("mensaje-usuario").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") enviarMensaje();
+    });
+
+    async function enviarMensaje() {
+        const input = document.getElementById('mensaje-usuario');
+        const caja = document.getElementById('caja-chat');
+        const texto = input.value;
+        if (!texto) return;
+
+//Mostrar los mensajes en la pantalla cinebot-usuario
+        caja.innerHTML += `<div class="message user">${texto}</div>`;
+        input.value = '';
+        caja.scrollTop = caja.scrollHeight;
+
+//Pensando...
+        const loadingId = "loading-" + Date.now();
+        caja.innerHTML += `<div class="message bot" id="${loadingId}">🎥 Pensando...</div>`;
+        caja.scrollTop = caja.scrollHeight;
+
+        try {
+            const respuesta = await fetch('/api/chat/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mensaje: texto, modo: modoActual }) 
+            });
+            const data = await respuesta.json();
+            document.getElementById(loadingId).innerText = data.respuesta;
+            
+//Actualizar la memoria
+            memoriaChats[modoActual] = caja.innerHTML;
+            
+            caja.scrollTop = caja.scrollHeight;
+        } catch (error) {
+            document.getElementById(loadingId).innerText = "❌ Error en la conexión.";
+            memoriaChats[modoActual] = caja.innerHTML;
+        }
+    }
+//Descargar el historial en .txt
+    function descargarHistorial(){
+        window.location.href = '/descargar/';
+    }
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,5 @@
+django
+pymongo
+reportlab
+requests
+ollama
