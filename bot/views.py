@@ -5,6 +5,7 @@ from pymongo import MongoClient
 import json
 import socket
 from ollama import Client 
+import time
 
 # Config inicial de mongo
 try:
@@ -42,10 +43,11 @@ def api_chat(request):
         data = json.loads(request.body)
         mensaje_usuario = data.get('mensaje', '')
         modo = data.get('modo', 'recomendacion')
+        user_id= data.get('user_id', 'Anónimo')
 
  #Promts: 
         if modo == 'busqueda':
-            sistema = "Eres un experto buscando películas y series de TV. Adivina el título."
+            sistema = "Eres un experto buscando películas y series de TV de acuerdo a la trama que te describen. Adivina el título."
         elif modo == 'series':
             sistema = "Eres un experto en series de TV. Recomienda con plataforma."
         elif modo == 'trivia':
@@ -68,24 +70,30 @@ def api_chat(request):
 
         try:
 #Llamando al modelo (gemma3 en este caso)
+            inicio = time.time() 
             response = cliente_ollama.chat(
                 model='gemma3',  
                 messages=mensajes_para_enviar,
                 stream=False,
                 options={
                     "temperature": 0.2,
-                    "num_predict": 500 
+                    "num_predict": 1000
                 }
             )
+            fin= time.time()
+            tiempo_total=round(fin - inicio, 2)
 
             texto_bot = response['message']['content']
             
 #Generar historial
             historial_chats.insert_one({
+                "user_id": user_id,
                 "usuario": mensaje_usuario,
                 "bot": texto_bot,
-                "modo": modo
+                "modo": modo,
+                "tiempo_respuesta": tiempo_total
             })
+            print (f"[Gemma2] Respodió a {user_id} en {tiempo_total}s", flush=True)
 
             return JsonResponse({'respuesta': texto_bot})
             
@@ -103,11 +111,13 @@ def exportar_chat(request):
     texto_archivo = "---Historial de conversación con CineBot---\n\n"
 
     for conversacion in conversaciones:
+        u_id = conversacion.get ('user_id', 'Desconocido')
         usuario = conversacion.get('usuario', '')
         bot = conversacion.get('bot', ' ')
         modo = conversacion.get('modo', 'general')
 
-        texto_archivo += f"[Modo: {modo}]\n"
+
+        texto_archivo += f"[{u_id}] - [Modo: {modo}]\n"
         texto_archivo += f"Tú: {usuario}\n"
         texto_archivo += f"CineBot: {bot}\n"
         texto_archivo += "-" * 30 + "\n"

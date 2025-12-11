@@ -57,9 +57,20 @@
 </div>
 
 <script>
+    // Asignar a cada usuario un ID: 
+    let userID= localStorage.getItem('cinebot_user_id');
+    if (!userID) {
+        const randomNum = Math.floor(Math.random ()*1000);
+        userID = `User-${randomNum}`;
+        localStorage.setItem('cinebot_user_id', userID);
+    }
+
+    //Ver el usuario en la consola 
+    console.log("Identificado como:", userID);
+
+//Meoria y variables 
     let modoActual = 'recomendacion'; 
 
-//Memoria
     let memoriaChats = {
         'recomendacion': '',
         'busqueda': '',
@@ -69,7 +80,7 @@
 
     const bienvenidas = {
         'recomendacion': '¡Hola! ¿Qué tipo de película buscas hoy? 🍿',
-        'busqueda': 'Describe una escena o trama y te ayudaré a encontrar la película. 🕵️‍♂️',
+        'busqueda': 'Describe una escena o trama y te ayudaré a encontrar la película o serie. 🕵️‍♂️',
         'series': '¿Qué series te han gustado recientemente? 📺',
         'trivia': 'Dime un actor o película y te daré un dato curioso. 💡'
     };
@@ -82,15 +93,14 @@
         
 //Guardando la pantalla actual
         memoriaChats[modoActual] = caja.innerHTML;
-
-
         modoActual = nuevoModo;
         
         document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+
         const textos = {
             'recomendacion': 'Modo: Recomendación de Películas',
-            'busqueda': 'Modo: Adivinar película por resumen',
+            'busqueda': 'Modo: Adivinar película o serie por resumen',
             'series': 'Modo: Sugerencias de Series',
             'trivia': 'Modo: Datos curiosos de cine'
         };
@@ -132,7 +142,7 @@
             const respuesta = await fetch('/api/chat/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mensaje: texto, modo: modoActual }) 
+                body: JSON.stringify({ mensaje: texto, modo: modoActual, user_id: userID }) 
             });
             const data = await respuesta.json();
             document.getElementById(loadingId).innerText = data.respuesta;
