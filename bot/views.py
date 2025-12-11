@@ -53,10 +53,10 @@ def api_chat(request):
         elif modo == 'trivia':
             sistema = "Eres experto en curiosidades de cine."
         else:
-            sistema = "Eres un crítico de cine. Recomienda con año, director y un resumen de la trama."
+            sistema = "Eres un crítico de cine. Recomienda con año, director y un breve resumen de la trama."
 
-#Memoria
-        historial_reciente = list(historial_chats.find({'modo': modo}).sort('_id', -1).limit(5))
+#Memoria por ahora limitado a 10 mensajes
+        historial_reciente = list(historial_chats.find({'modo': modo}).sort('_id', -1).limit(10))
         historial_reciente.reverse()
 
 #Crear "Mensajes"
@@ -77,7 +77,8 @@ def api_chat(request):
                 stream=False,
                 options={
                     "temperature": 0.2,
-                    "num_predict": 1000
+                    "top_p": 0.8,
+                    "num_predict": 400
                 }
             )
             fin= time.time()
