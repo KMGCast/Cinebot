@@ -29,5 +29,18 @@ services:
     volumes:
       - ollama_data:/root/.ollama
 
+  #Configuracón para NGNIX Proxy Manager
+
+  nginx:
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    ports:
+      - '80:80'      # Puerta Principal (HTTP)
+      - '81:81'      # Panel de Administración
+      - '443:443'    # Puerta Segura (HTTPS)
+    volumes:
+      - ./nginx_data:/data
+      - ./nginx_letsencrypt:/etc/letsencrypt
+
 volumes:
   ollama_data:
