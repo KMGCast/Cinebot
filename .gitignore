@@ -11,3 +11,4 @@ venv/
 .DS_Store
 mongo_data/
 nginx_data/
+nginx_letsencrypt/
