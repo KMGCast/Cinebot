@@ -28,6 +28,30 @@
         .input-area { padding: 15px; display: flex; gap: 10px; border-top: 1px solid #333; }
         input { flex: 1; padding: 10px; border-radius: 20px; border: none; outline: none; background-color: #2c2c2c; color: white; }
         button.send-btn { padding: 10px 20px; border-radius: 20px; border: none; background-color: #d32f2f; color: white; cursor: pointer; font-weight: bold; }
+    
+    /*ESTILOS DE LA ANIMACIÓN DE PENSANDO */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        
+        .dot {
+            width: 6px;
+            height: 6px;
+            background-color: #bbb; /* Color del puntito */
+            border-radius: 50%;
+            display: inline-block;
+            animation: saltar 1.4s infinite ease-in-out both;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes saltar {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -135,7 +159,19 @@
 
 //Pensando...
         const loadingId = "loading-" + Date.now();
-        caja.innerHTML += `<div class="message bot" id="${loadingId}">🎥 Pensando...</div>`;
+        
+        // Creamos el HTML de los puntitos
+        const htmlAnimacion = `
+            <div class="typing-indicator">
+                <span>Pensando  </span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+        `;
+        
+        // Lo insertamos en el chat
+        caja.innerHTML += `<div class="message bot" id="${loadingId}">${htmlAnimacion}</div>`;
         caja.scrollTop = caja.scrollHeight;
 
         try {
@@ -145,6 +181,8 @@
                 body: JSON.stringify({ mensaje: texto, modo: modoActual, user_id: userID }) 
             });
             const data = await respuesta.json();
+            
+            // Cuando llega la respuesta, .innerText borra los puntitos y pone el texto final
             document.getElementById(loadingId).innerText = data.respuesta;
             
 //Actualizar la memoria
