@@ -10,3 +10,4 @@ venv/
 *.sqlite3
 .DS_Store
 mongo_data/
+nginx_data/
